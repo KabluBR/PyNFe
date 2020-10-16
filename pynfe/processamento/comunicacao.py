@@ -628,32 +628,37 @@ class ComunicacaoNfse(Comunicacao):
         cabecalho = self._cabecalho()
         # comunicacao wsdl
         try:
-            from suds.client import Client
-            from pynfe.utils.https_nfse import HttpAuthenticated
+            from zeep import Client
+            from zeep.transports import Transport
+            from requests import Session
 
             certificadoA1 = CertificadoA1(self.certificado)
             chave, cert = certificadoA1.separar_arquivo(self.certificado_senha, caminho=True)
 
-            cliente = Client(url, transport = HttpAuthenticated(key=chave, cert=cert, endereco=url))
+            session = Session()
+            session.cert = (cert, chave)
+            session.verify = False
+            transport = Transport(session=session)
+            cliente = Client(url, transport = transport)
 
             # gerar nfse
             if metodo == 'gerar':
-                return cliente.service.GerarNfse(cabecalho, xml)
+                return cliente.service['GerarNfse'](cabecalho, xml)
             elif metodo == 'enviar_lote':
-                return cliente.service.RecepcionarLoteRpsV3(cabecalho, xml)
+                return cliente.service['RecepcionarLoteRpsV3'](cabecalho, xml)
             elif metodo == 'consulta':
-                return cliente.service.ConsultarNfseV3(cabecalho, xml)
+                return cliente.service['ConsultarNfseV3'](cabecalho, xml)
             elif metodo == 'consulta_lote':
-                return cliente.service.ConsultarLoteRpsV3(cabecalho, xml)
+                return cliente.service['ConsultarLoteRpsV3'](cabecalho, xml)
             elif metodo == 'consulta_situacao_lote':
-                return cliente.service.ConsultarSituacaoLoteRpsV3(cabecalho, xml)
+                return cliente.service['ConsultarSituacaoLoteRpsV3'](cabecalho, xml)
             elif metodo == 'consultaRps':
-                return cliente.service.ConsultarNfsePorRpsV3(cabecalho, xml)
+                return cliente.service['ConsultarNfsePorRpsV3'](cabecalho, xml)
             elif metodo == 'consultaFaixa':
-                return cliente.service.ConsultarNfseFaixa(cabecalho, xml)
+                return cliente.service['ConsultarNfseFaixa'](cabecalho, xml)
             elif metodo == 'cancelar':
                 # versão 2
-                return cliente.service.CancelarNfse(xml)
+                return cliente.service['CancelarNfse'](xml)
                 # versão 3
                 # return cliente.service.CancelarNfseV3(cabecalho, xml)
             # TODO outros metodos
